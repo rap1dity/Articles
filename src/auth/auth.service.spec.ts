@@ -42,6 +42,7 @@ describe('AuthService', () => {
 
     // received
     const user = { id: 1, username: 'timeworstseal', password: await bcrypt.hash('pass123', 5) };
+    const payload = { id: user.id, username: user.username};
 
     // mocking
     (usersService.getUserByUsername as jest.Mock).mockResolvedValue(user);
@@ -54,7 +55,7 @@ describe('AuthService', () => {
 
     expect(usersService.getUserByUsername).toHaveBeenCalledWith(loginDto.username);
 
-    expect(jwtService.sign).toHaveBeenCalledWith(user);
+    expect(jwtService.sign).toHaveBeenCalledWith(payload);
   })
 
   it('should throw an UnauthorizedException if username is incorrect', async () => {
@@ -94,6 +95,7 @@ describe('AuthService', () => {
     // received
     const hashedPassword = await bcrypt.hash(createUserDto.password, 5);
     const user = { id: 1, username: 'testuser', password: hashedPassword};
+    const payload = { id: user.id, username: user.username };
     const token = 'generated_token';
 
     // mocking
@@ -116,7 +118,7 @@ describe('AuthService', () => {
       password: hashedPassword,
     });
 
-    expect(jwtService.sign).toHaveBeenCalledWith(user);
+    expect(jwtService.sign).toHaveBeenCalledWith(payload);
   });
 
   it('should throw an HTTP error if user already exists', async () => {
