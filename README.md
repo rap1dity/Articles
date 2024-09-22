@@ -13,7 +13,6 @@ npm run migrate:down
 ## Project folder structure
 ```js
 +-- dist
-+-- public
 +-- src
 |   +-- article
 |   |   +-- dto
@@ -21,12 +20,15 @@ npm run migrate:down
 |   +-- auth
 |   +-- common
 |   |   +-- config
+|   |   +-- types
 |   +-- decorators
 |   +-- exceptions
 |   +-- guards
 |   +-- migrations
 |   +-- pipes
 |   +-- redis
+|   +-- tokens
+|   |   +-- entities
 |   +-- users
 |   |   +-- dto
 |   |   +-- entities
