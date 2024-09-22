@@ -37,6 +37,7 @@ export class ArticleController {
 
   @ApiOperation({summary: 'Get all User Articles'})
   @ApiResponse({status: 200, type: Article})
+  @UseGuards(JwtAuthGuard)
   @Get()
   async getAll(@Query('page') page: number = 1,
                @Query('limit') limit: number = 10,

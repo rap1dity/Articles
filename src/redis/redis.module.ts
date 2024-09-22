@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module } from "@nestjs/common";
 import Redis from "ioredis";
 
 @Module({
@@ -6,11 +6,10 @@ import Redis from "ioredis";
   providers: [{
     provide: 'REDIS_CLIENT',
     useFactory: () => {
-      const redis = new Redis({
+      return new Redis({
         host: 'localhost',
         port: 6379,
-      })
-      return redis;
+      });
     }
   }],
   exports: ['REDIS_CLIENT']

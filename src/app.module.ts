@@ -7,11 +7,13 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ArticleModule } from './article/article.module';
 import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
+import { TokensModule } from './tokens/tokens.module';
 
 const typeOrmConfig = {
   imports: [
     ConfigModule.forRoot({
       load: [databaseConfig],
+      isGlobal: true
     }),
   ],
   inject: [ConfigService],
@@ -29,6 +31,7 @@ const typeOrmConfig = {
     ArticleModule,
     RedisModule,
     UsersModule,
+    TokensModule,
   ],
 })
 export class AppModule {}

@@ -5,11 +5,12 @@ import { AuthService } from "./auth.service";
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import { HttpException, UnauthorizedException } from "@nestjs/common";
+import { TokensService } from "../tokens/tokens.service";
 
 describe('AuthService', () => {
   let authService: AuthService;
   let usersService: UsersService;
-  let jwtService: JwtService;
+  let tokensService: TokensService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,39 +24,46 @@ describe('AuthService', () => {
           }
         },
         {
-          provide: JwtService,
-          useValue: {
-            sign: jest.fn(),
-          },
+         provide: TokensService,
+         useValue: {
+           generateTokens: jest.fn(),
+           verifyToken: jest.fn(),
+           removeTokensForDevice: jest.fn(),
+           refreshTokens: jest.fn(),
+         }
         },
       ]
     }).compile()
 
     authService = await module.get<AuthService>(AuthService);
     usersService = await module.get<UsersService>(UsersService);
-    jwtService = await module.get<JwtService>(JwtService);
+    tokensService = await module.get<TokensService>(TokensService);
   })
 
-  it('should login a user and return a token', async () => {
+  it('should login a user and return a tokens', async () => {
     // input
     const loginDto: CreateUserDto = { username: 'timeworstseal', password: 'pass123' };
 
     // received
     const user = { id: 1, username: 'timeworstseal', password: await bcrypt.hash('pass123', 5) };
-    const payload = { id: user.id, username: user.username};
+    const tokens = {
+      accessToken: 'access_token',
+      refreshToken: 'refresh_token',
+      deviceId: '423423-4242-fdafsd-4333'
+    };
 
     // mocking
     (usersService.getUserByUsername as jest.Mock).mockResolvedValue(user);
-    (jwtService.sign as jest.Mock).mockReturnValue('valid_token')
+    (tokensService.generateTokens as jest.Mock).mockResolvedValue(tokens);
 
     // testing method
     const result = await authService.login(loginDto);
 
-    expect(result).toEqual({ token: 'valid_token' });
+    expect(result).toEqual(tokens);
 
-    expect(usersService.getUserByUsername).toHaveBeenCalledWith(loginDto.username);
+    expect(usersService.getUserByUsername).toHaveBeenCalledWith(loginDto.username)
 
-    expect(jwtService.sign).toHaveBeenCalledWith(payload);
+    expect(tokensService.generateTokens).toHaveBeenCalledWith(user);
   })
 
   it('should throw an UnauthorizedException if username is incorrect', async () => {
@@ -95,19 +103,22 @@ describe('AuthService', () => {
     // received
     const hashedPassword = await bcrypt.hash(createUserDto.password, 5);
     const user = { id: 1, username: 'testuser', password: hashedPassword};
-    const payload = { id: user.id, username: user.username };
-    const token = 'generated_token';
+    const tokens = {
+      accessToken: 'access_token',
+      refreshToken: 'refresh_token',
+      deviceId: '423423-4242-fdafsd-4333'
+    };
 
     // mocking
     (usersService.getUserByUsername as jest.Mock).mockResolvedValue(null);
-    (usersService.create as jest.Mock).mockResolvedValue(user);
     (bcrypt.hash as jest.Mock) = jest.fn().mockResolvedValue(hashedPassword);
-    (jwtService.sign as jest.Mock) = jest.fn().mockReturnValue(token);
+    (usersService.create as jest.Mock).mockResolvedValue(user);
+    (tokensService.generateTokens as jest.Mock).mockResolvedValue(tokens);
 
     // testing method
     const result = await authService.register(createUserDto);
 
-    expect(result).toEqual({ token });
+    expect(result).toEqual(tokens);
 
     expect(usersService.getUserByUsername).toHaveBeenCalledWith(createUserDto.username);
 
@@ -118,7 +129,7 @@ describe('AuthService', () => {
       password: hashedPassword,
     });
 
-    expect(jwtService.sign).toHaveBeenCalledWith(payload);
+    expect(tokensService.generateTokens).toHaveBeenCalledWith(user);
   });
 
   it('should throw an HTTP error if user already exists', async () => {
@@ -136,4 +147,31 @@ describe('AuthService', () => {
 
     expect(usersService.getUserByUsername).toHaveBeenCalledWith(createUserDto.username);
   });
+
+  it('should logout from account', async () => {
+    // input
+    const refreshToken = 'refresh_token';
+
+    // received
+    const payload = {
+      deviceId: '423423-4242-fdafsd-4333',
+    };
+
+    // mocking
+    (tokensService.verifyToken as jest.Mock).mockReturnValue(payload);
+    (tokensService.removeTokensForDevice as jest.Mock).mockResolvedValue(null);
+
+    // testing method
+    const result = await authService.logout(refreshToken);
+
+    expect(result).toEqual(null);
+
+    expect(tokensService.verifyToken).toHaveBeenCalledWith(refreshToken);
+
+    expect(tokensService.removeTokensForDevice).toHaveBeenCalledWith(payload.deviceId);
+  })
+
+  it('should throw throw UnauthorizedException if refreshToken not provided', async () => {
+    
+  })
 })

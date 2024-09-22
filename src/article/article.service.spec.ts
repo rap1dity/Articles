@@ -3,7 +3,6 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { Article } from "./entities/article.entity";
 import { Repository } from "typeorm";
-import { User } from "../users/entities/user.entity";
 import Redis from "ioredis";
 import { UsersService } from "../users/users.service";
 import { CreateArticleDto } from "./dto/create-article.dto";
